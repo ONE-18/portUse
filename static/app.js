@@ -52,9 +52,16 @@ async function showDetail(id) {
     $('detail').hidden = false;
     $('comparison').hidden = true;
     $('detail').innerHTML = `<div class="detail-heading"><div><h2>${escapeHtml(result.metadata.filename)}</h2><p class="muted">Generado: ${date(result.metadata.generated)} · Subido: ${date(result.metadata.uploaded_at)}</p></div><label class="port-search">Buscar puerto<input id="port-search-input" type="search" placeholder="Ej. 8080"></label></div>` +
-      hosts.map((host, index) => `<details class="host" open data-host-index="${index}"><summary class="host-title"><span>${escapeHtml(host.hostname || `ctid-${host.ctid}`)} <span class="muted">${host.docker ? 'Docker' : 'LXC'} · ${(host.ips || []).join(', ')}</span></span><button class="random-port" type="button" data-host-index="${index}">Puerto libre</button></summary>` +
-        (host.containers || []).map((c) => `<div class="container-row" data-ports="${escapeHtml((c.ports || []).join(' '))}"><strong>${escapeHtml(c.name)}</strong><span class="ports">${(c.ports || []).map(escapeHtml).join('<br>') || 'sin puertos publicados'}</span></div>`).join('') +
-        (host.npm_routes || []).map((route) => `<div class="npm-route-row" data-ports="${escapeHtml(`${(route.domain_names || []).join(' ')} ${route.forward_host || ''} ${route.forward_port || ''} ${route.container || ''}`)}"><strong>${escapeHtml((route.domain_names || []).join(', ') || 'sin dominio')}</strong><span class="ports">${escapeHtml(`${route.forward_scheme || 'http'}://${route.forward_host || '?'}:${route.forward_port || '?'} · ${route.container || 'contenedor no identificado'}`)}</span></div>`).join('') + '</details>').join('');
+      hosts.map((host, index) => {
+        const routes = host.npm_routes || [];
+        const routeMarkup = (route) => `<div class="npm-route" data-ports="${escapeHtml(`${(route.domain_names || []).join(' ')} ${route.forward_host || ''} ${route.forward_port || ''}`)}"><span>Ruta NPM: ${escapeHtml((route.domain_names || []).join(', ') || 'sin dominio')}</span><span class="ports">${escapeHtml(`${route.forward_scheme || 'http'}://${route.forward_host || '?'}:${route.forward_port || '?'}`)}</span></div>`;
+        const rows = (host.containers || []).map((container) => {
+          const containerRoutes = routes.filter((route) => route.container === container.name);
+          return `<div class="container-row" data-ports="${escapeHtml((container.ports || []).join(' '))}"><strong>${escapeHtml(container.name)}</strong><div class="ports">${(container.ports || []).map(escapeHtml).join('<br>') || 'sin puertos publicados'}${containerRoutes.map(routeMarkup).join('')}</div></div>`;
+        }).join('');
+        const unmatchedRoutes = routes.filter((route) => !route.container || !(host.containers || []).some((container) => container.name === route.container));
+        return `<details class="host" open data-host-index="${index}"><summary class="host-title"><span>${escapeHtml(host.hostname || `ctid-${host.ctid}`)} <span class="muted">${host.docker ? 'Docker' : 'LXC'} · ${(host.ips || []).join(', ')}</span></span><button class="random-port" type="button" data-host-index="${index}">Puerto libre</button></summary>${rows}${unmatchedRoutes.map(routeMarkup).join('')}</details>`;
+      }).join('');
     $('port-search-input').addEventListener('input', filterPorts);
     document.querySelectorAll('.random-port').forEach((button) => button.addEventListener('click', getRandomPort));
     renderCards();
@@ -65,7 +72,7 @@ function filterPorts(event) {
   const query = event.target.value.trim().toLowerCase();
   document.querySelectorAll('.host').forEach((host) => {
     let visible = 0;
-    host.querySelectorAll('.container-row,.npm-route-row').forEach((row) => {
+    host.querySelectorAll('.container-row').forEach((row) => {
       const matches = !query || row.dataset.ports.toLowerCase().includes(query);
       row.hidden = !matches;
       if (matches) visible += 1;
