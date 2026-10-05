@@ -1,11 +1,14 @@
 #!/bin/bash
 set -Eeuo pipefail
 
+trap 'status=$?; echo "Error en la línea $LINENO (código $status)." >&2; exit "$status"' ERR
+
 # Configuración autocontenida: modifica estos valores antes de instalar el script.
 API_URL="https://api.example.com"
 OUTPUT_DIR="/root/portUse"
 CONNECT_TIMEOUT=10
 UPLOAD_TIMEOUT=60
+API_URL="${API_URL%/}"
 
 CTIDS=(
     100
@@ -26,6 +29,7 @@ command -v jq >/dev/null || { echo "No se encontró jq." >&2; exit 1; }
 
 mkdir -p "$OUTPUT_DIR"
 OUTPUT="$OUTPUT_DIR/docker-ports-$(date '+%Y-%m-%d_%H-%M-%S').json"
+echo "Iniciando recolección para CTIDs: ${CTIDS[*]}"
 
 echo '{' > "$OUTPUT"
 echo '  "generated": "'$(date --iso-8601=seconds)'",' >> "$OUTPUT"
@@ -41,7 +45,12 @@ for CTID in "${CTIDS[@]}"; do
         continue
     fi
 
-    HOSTNAME=$(pct exec "$CTID" -- hostname 2>/dev/null)
+    if HOSTNAME="$(pct exec "$CTID" -- hostname 2>/dev/null)"; then
+        :
+    else
+        HOSTNAME=""
+        echo "No se pudo obtener el hostname del CT $CTID; puede estar detenido." >&2
+    fi
 
     # Escapar posibles caracteres especiales para JSON
     HOSTNAME=$(printf '%s' "$HOSTNAME" | sed 's/\\/\\\\/g; s/"/\\"/g')
@@ -91,18 +100,31 @@ for CTID in "${CTIDS[@]}"; do
 
 done
 
+if [ "$FIRST_CT" = true ]; then
+    echo "No se encontró ningún CTID válido. Revisa CTIDS antes de enviar el informe." >&2
+    rm -f "$OUTPUT"
+    exit 1
+fi
+
 echo >> "$OUTPUT"
 echo '  ]' >> "$OUTPUT"
 echo '}' >> "$OUTPUT"
 
+jq empty "$OUTPUT" || {
+    echo "El informe generado no contiene un JSON válido: $OUTPUT" >&2
+    exit 1
+}
+
 echo "Informe generado en: $OUTPUT"
+UPLOAD_URL="$API_URL/api/snapshots"
+echo "Enviando snapshot a: $UPLOAD_URL"
 
 RESPONSE="$(
-    curl --fail --silent --show-error \
+    curl --fail-with-body --silent --show-error \
         --connect-timeout "$CONNECT_TIMEOUT" \
         --max-time "$UPLOAD_TIMEOUT" \
         -F "file=@$OUTPUT;type=application/json" \
-        "$API_URL/api/snapshots"
+        "$UPLOAD_URL"
 )"
 
 if ! jq -e '.id and .filename' >/dev/null <<<"$RESPONSE"; then

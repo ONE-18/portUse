@@ -57,4 +57,6 @@ chmod 700 portuse.sh
 
 El script es autocontenido y no necesita ningún archivo `.conf`. `API_URL` debe ser
 una dirección HTTPS; el script rechaza destinos HTTP para no enviar snapshots sin
-cifrar.
+cifrar. Al finalizar muestra la URL exacta utilizada y el identificador asignado por
+cifrar. Si ninguno de los CTIDs configurados existe, termina con error y no sube un
+snapshot vacío.
