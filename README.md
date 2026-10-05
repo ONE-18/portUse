@@ -43,3 +43,18 @@ Abre <http://localhost:8000>. La documentación interactiva de la API está en <
 - `GET /api/compare?from_id={id}&to_id={id}` — detecta contenedores añadidos, eliminados y cambios de puertos.
 
 Los datos se guardan localmente en `data/` (SQLite para metadatos y un JSON por snapshot).
+
+## Recolector Proxmox
+
+El script [portuse.sh](./script/portuse.sh) conserva el informe local y lo envía automáticamente
+a la API mediante `POST /api/snapshots`.
+
+```bash
+# Edita API_URL, OUTPUT_DIR y CTIDS directamente en portuse.sh
+chmod 700 portuse.sh
+./portuse.sh
+```
+
+El script es autocontenido y no necesita ningún archivo `.conf`. `API_URL` debe ser
+una dirección HTTPS; el script rechaza destinos HTTP para no enviar snapshots sin
+cifrar.
