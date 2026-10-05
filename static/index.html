@@ -10,7 +10,10 @@
     <main class="shell">
       <header class="topbar">
         <div class="brand"><span class="brand-mark">⌘</span><div><strong>PortUse</strong><small>inventarios de infraestructura</small></div></div>
-        <label class="upload-button">+ Cargar JSON<input id="file-input" type="file" accept=".json,application/json"></label>
+        <div class="topbar-actions">
+          <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Activar modo oscuro" aria-pressed="false"><span aria-hidden="true">◐</span><span class="theme-label">Modo oscuro</span></button>
+          <label class="upload-button">+ Cargar JSON<input id="file-input" type="file" accept=".json,application/json"></label>
+        </div>
       </header>
       <section class="hero">
         <div><p class="eyebrow">CENTRO DE CONTROL</p><h1>Visualiza la evolución<br><em>de tus contenedores.</em></h1><p class="intro">Carga snapshots JSON, inspecciona el estado más reciente y detecta cambios entre dos momentos.</p></div>

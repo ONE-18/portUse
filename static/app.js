@@ -3,6 +3,14 @@ const $ = (id) => document.getElementById(id);
 const date = (value) => value ? new Date(value).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' }) : 'sin fecha';
 const notice = (message) => { $('notice').textContent = message; $('notice').hidden = !message; };
 
+function setTheme(dark) {
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  localStorage.setItem('portuse-theme', dark ? 'dark' : 'light');
+  $('theme-toggle').setAttribute('aria-pressed', String(dark));
+  $('theme-toggle').setAttribute('aria-label', dark ? 'Activar modo claro' : 'Activar modo oscuro');
+  $('theme-toggle').querySelector('.theme-label').textContent = dark ? 'Modo claro' : 'Modo oscuro';
+}
+
 async function request(url, options) {
   const response = await fetch(url, options);
   const body = await response.json();
@@ -87,6 +95,8 @@ async function load() {
   try { state.snapshots = await request('/api/snapshots'); renderSelectors(); renderCards(); if (state.snapshots[0]) showDetail(state.snapshots[0].id); }
   catch (error) { notice(error.message); }
 }
+$('theme-toggle').addEventListener('click', () => setTheme(document.documentElement.dataset.theme !== 'dark'));
+setTheme(localStorage.getItem('portuse-theme') === 'dark');
 $('file-input').addEventListener('change', async (event) => {
   const file = event.target.files[0]; if (!file) return;
   try { await request('/api/snapshots', { method: 'POST', body: (() => { const data = new FormData(); data.append('file', file); return data; })() }); notice(''); await load(); }
