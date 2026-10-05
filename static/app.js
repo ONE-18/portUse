@@ -74,9 +74,30 @@ async function getRandomPort(event) {
   const button = event.currentTarget;
   try {
     const result = await request(`/api/snapshots/${state.selected}/random-port?host_index=${button.dataset.hostIndex}`);
-    button.textContent = `Libre: ${result.port}`;
-    button.classList.add('found');
+    showPortModal(result.port);
   } catch (error) { notice(error.message); }
+}
+
+function showPortModal(port) {
+  $('port-value').textContent = port;
+  $('copy-status').textContent = '';
+  $('copy-port').textContent = 'Copiar puerto';
+  $('port-modal').hidden = false;
+  $('copy-port').focus();
+}
+
+function closePortModal() {
+  $('port-modal').hidden = true;
+}
+
+async function copyPort() {
+  try {
+    await navigator.clipboard.writeText($('port-value').textContent);
+    $('copy-port').textContent = 'Copiado';
+    $('copy-status').textContent = 'El puerto está en el portapapeles.';
+  } catch (error) {
+    $('copy-status').textContent = 'No se pudo copiar automáticamente. Selecciona el puerto manualmente.';
+  }
 }
 
 async function compare() {
@@ -97,6 +118,10 @@ async function load() {
 }
 $('theme-toggle').addEventListener('click', () => setTheme(document.documentElement.dataset.theme !== 'dark'));
 setTheme(localStorage.getItem('portuse-theme') === 'dark');
+$('close-port-modal').addEventListener('click', closePortModal);
+$('copy-port').addEventListener('click', copyPort);
+$('port-modal').addEventListener('click', (event) => { if (event.target.hasAttribute('data-close-modal')) closePortModal(); });
+document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !$('port-modal').hidden) closePortModal(); });
 $('file-input').addEventListener('change', async (event) => {
   const file = event.target.files[0]; if (!file) return;
   try { await request('/api/snapshots', { method: 'POST', body: (() => { const data = new FormData(); data.append('file', file); return data; })() }); notice(''); await load(); }

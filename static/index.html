@@ -28,6 +28,17 @@
       <section id="detail" class="detail" hidden></section>
       <section id="comparison" class="comparison" hidden></section>
     </main>
+    <div id="port-modal" class="modal" hidden>
+      <div class="modal-backdrop" data-close-modal></div>
+      <section class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="port-modal-title">
+        <button id="close-port-modal" class="modal-close" type="button" aria-label="Cerrar">×</button>
+        <p class="eyebrow">PUERTO DISPONIBLE</p>
+        <h2 id="port-modal-title">Puerto libre encontrado</h2>
+        <output id="port-value" class="port-value"></output>
+        <button id="copy-port" class="copy-port" type="button">Copiar puerto</button>
+        <p id="copy-status" class="copy-status" aria-live="polite"></p>
+      </section>
+    </div>
     <script src="/static/app.js"></script>
   </body>
 </html>
