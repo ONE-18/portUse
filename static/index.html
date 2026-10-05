@@ -1,28 +1,65 @@
 <!doctype html>
 <html lang="es">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>PortUse · Inventarios</title>
-    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="/static/styles.css" />
   </head>
   <body>
     <main class="shell">
       <header class="topbar">
-        <div class="brand"><span class="brand-mark">⌘</span><div><strong>PortUse</strong><small>inventarios de infraestructura</small></div></div>
+        <div class="brand">
+          <span class="brand-mark">⌘</span>
+          <div>
+            <strong>PortUse</strong
+            ><small>inventarios de infraestructura</small>
+          </div>
+        </div>
         <div class="topbar-actions">
-          <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Activar modo oscuro" aria-pressed="false"><span aria-hidden="true">◐</span><span class="theme-label">Modo oscuro</span></button>
-          <label class="upload-button">+ Cargar JSON<input id="file-input" type="file" accept=".json,application/json"></label>
+          <button
+            id="theme-toggle"
+            class="theme-toggle"
+            type="button"
+            aria-label="Activar modo oscuro"
+            aria-pressed="false"
+          >
+            <span aria-hidden="true">◐</span
+            ><span class="theme-label">Modo oscuro</span>
+          </button>
+          <label class="upload-button"
+            >+ Cargar JSON<input
+              id="file-input"
+              type="file"
+              accept=".json,application/json"
+          /></label>
         </div>
       </header>
       <section class="hero">
-        <div><p class="eyebrow">CENTRO DE CONTROL</p><h1>Visualiza la evolución<br><em>de tus contenedores.</em></h1><p class="intro">Carga snapshots JSON, inspecciona el estado más reciente y detecta cambios entre dos momentos.</p></div>
-        <div class="hero-orb"><span>PORT<br>USE</span></div>
+        <div>
+          <p class="eyebrow">CENTRO DE CONTROL</p>
+          <h1>Visualiza la evolución<br /><em>de tus contenedores.</em></h1>
+          <p class="intro">
+            Carga snapshots JSON, inspecciona el estado más reciente y detecta
+            cambios entre dos momentos.
+          </p>
+        </div>
+        <div class="hero-orb">
+          <span>PORT<br />USE</span>
+        </div>
       </section>
       <div id="notice" class="notice" hidden></div>
       <section class="toolbar">
-        <div><h2>Snapshots</h2><span id="snapshot-count" class="muted"></span></div>
-        <div class="compare-controls"><select id="from-select" aria-label="Snapshot anterior"></select><span>→</span><select id="to-select" aria-label="Snapshot actual"></select><button id="compare-button" class="secondary">Comparar</button></div>
+        <div>
+          <h2>Snapshots</h2>
+          <span id="snapshot-count" class="muted"></span>
+        </div>
+        <div class="compare-controls">
+          <select id="from-select" aria-label="Snapshot anterior"></select
+          ><span>→</span
+          ><select id="to-select" aria-label="Snapshot actual"></select
+          ><button id="compare-button" class="secondary">Comparar</button>
+        </div>
       </section>
       <section id="snapshot-list" class="snapshot-list"></section>
       <section id="detail" class="detail" hidden></section>
@@ -30,12 +67,26 @@
     </main>
     <div id="port-modal" class="modal" hidden>
       <div class="modal-backdrop" data-close-modal></div>
-      <section class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="port-modal-title">
-        <button id="close-port-modal" class="modal-close" type="button" aria-label="Cerrar">×</button>
+      <section
+        class="modal-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="port-modal-title"
+      >
+        <button
+          id="close-port-modal"
+          class="modal-close"
+          type="button"
+          aria-label="Cerrar"
+        >
+          ×
+        </button>
         <p class="eyebrow">PUERTO DISPONIBLE</p>
         <h2 id="port-modal-title">Puerto libre encontrado</h2>
         <output id="port-value" class="port-value"></output>
-        <button id="copy-port" class="copy-port" type="button">Copiar puerto</button>
+        <button id="copy-port" class="copy-port" type="button">
+          Copiar puerto
+        </button>
         <p id="copy-status" class="copy-status" aria-live="polite"></p>
       </section>
     </div>
