@@ -98,6 +98,10 @@ anteriores y añade:
 - `npm.proxy_hosts`, con dominios, protocolo, `forward_host` y `forward_port`;
 - `npm.redirection_hosts` y `npm.streams`.
 
+Las IP guardadas en `ips` se limitan a la red `192.168.1.x`. Cada proxy host cuyo
+`forward_host` coincide con una de esas IP se añade como `npm_routes` dentro del LXC,
+incluyendo el puerto y el contenedor Docker cuyo puerto publicado coincide.
+
 Configura las credenciales de NPM mediante variables de entorno:
 
 ```bash

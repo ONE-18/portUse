@@ -44,60 +44,18 @@ function collection(value) {
   return value?.items || value?.data || [];
 }
 
-function renderNpm(npm, hosts) {
-  const proxyHosts = collection(npm.proxy_hosts);
-  const redirectionHosts = collection(npm.redirection_hosts);
-  const streams = collection(npm.streams);
-  if (!proxyHosts.length && !redirectionHosts.length && !streams.length) return '';
-
-  const lxcFor = (address) => hosts.find((host) => (host.ips || []).includes(address));
-  const target = (item) => {
-    const scheme = item.forward_scheme || 'http';
-    const address = item.forward_host || '?';
-    const port = item.forward_port ? `:${item.forward_port}` : '';
-    const lxc = lxcFor(address);
-    return `${scheme}://${address}${port}${lxc ? ` · ${lxc.hostname || `LXC ${lxc.ctid}`}` : ''}`;
-  };
-  const proxyRows = proxyHosts.map((item) => `
-    <div class="npm-row" data-npm-text="${escapeHtml(`${(item.domain_names || []).join(' ')} ${item.forward_host || ''} ${item.forward_port || ''}`)}">
-      <strong>${escapeHtml((item.domain_names || []).join(', ') || 'sin dominio')}</strong>
-      <span class="ports">${escapeHtml(target(item))}</span>
-    </div>`).join('');
-  const redirectRows = redirectionHosts.map((item) => `
-    <div class="npm-row" data-npm-text="${escapeHtml(`${(item.domain_names || []).join(' ')} ${item.forward_domain_name || ''}`)}">
-      <strong>${escapeHtml((item.domain_names || []).join(', ') || 'sin dominio')}</strong>
-      <span class="ports">→ ${escapeHtml(item.forward_domain_name || '?')} · HTTP ${escapeHtml(item.forward_http_code || '?')}</span>
-    </div>`).join('');
-  const streamRows = streams.map((item) => `
-    <div class="npm-row" data-npm-text="${escapeHtml(`${item.incoming_port || ''} ${item.forwarding_host || ''} ${item.forwarding_port || ''}`)}">
-      <strong>Entrada :${escapeHtml(item.incoming_port || '?')}</strong>
-      <span class="ports">→ ${escapeHtml(item.forwarding_host || '?')}:${escapeHtml(item.forwarding_port || '?')}</span>
-    </div>`).join('');
-  const group = (title, rows, count) => rows ? `<div class="npm-group"><h3>${title} <span class="muted">${count}</span></h3>${rows}</div>` : '';
-  return `<section class="npm-section">
-    <div class="detail-heading"><div><h2>Rutas Nginx Proxy Manager</h2><p class="muted">${escapeHtml(npm.url || 'API NPM')}</p></div>
-    <label class="port-search">Buscar ruta<input id="npm-search-input" type="search" placeholder="Dominio o IP"></label></div>
-    ${group('Proxy hosts', proxyRows, proxyHosts.length)}
-    ${group('Redirecciones', redirectRows, redirectionHosts.length)}
-    ${group('Streams TCP/UDP', streamRows, streams.length)}
-  </section>`;
-}
-
 async function showDetail(id) {
   try {
     const result = await request(`/api/snapshots/${id}`);
     state.selected = id;
     const hosts = result.data.containers || [];
-    const npm = result.data.npm || {};
-    const npmMarkup = renderNpm(npm, hosts);
     $('detail').hidden = false;
     $('comparison').hidden = true;
     $('detail').innerHTML = `<div class="detail-heading"><div><h2>${escapeHtml(result.metadata.filename)}</h2><p class="muted">Generado: ${date(result.metadata.generated)} · Subido: ${date(result.metadata.uploaded_at)}</p></div><label class="port-search">Buscar puerto<input id="port-search-input" type="search" placeholder="Ej. 8080"></label></div>` +
       hosts.map((host, index) => `<details class="host" open data-host-index="${index}"><summary class="host-title"><span>${escapeHtml(host.hostname || `ctid-${host.ctid}`)} <span class="muted">${host.docker ? 'Docker' : 'LXC'} · ${(host.ips || []).join(', ')}</span></span><button class="random-port" type="button" data-host-index="${index}">Puerto libre</button></summary>` +
-        (host.containers || []).map((c) => `<div class="container-row" data-ports="${escapeHtml((c.ports || []).join(' '))}"><strong>${escapeHtml(c.name)}</strong><span class="ports">${(c.ports || []).map(escapeHtml).join('<br>') || 'sin puertos publicados'}</span></div>`).join('') + '</details>').join('') + npmMarkup;
+        (host.containers || []).map((c) => `<div class="container-row" data-ports="${escapeHtml((c.ports || []).join(' '))}"><strong>${escapeHtml(c.name)}</strong><span class="ports">${(c.ports || []).map(escapeHtml).join('<br>') || 'sin puertos publicados'}</span></div>`).join('') +
+        (host.npm_routes || []).map((route) => `<div class="npm-route-row" data-ports="${escapeHtml(`${(route.domain_names || []).join(' ')} ${route.forward_host || ''} ${route.forward_port || ''} ${route.container || ''}`)}"><strong>${escapeHtml((route.domain_names || []).join(', ') || 'sin dominio')}</strong><span class="ports">${escapeHtml(`${route.forward_scheme || 'http'}://${route.forward_host || '?'}:${route.forward_port || '?'} · ${route.container || 'contenedor no identificado'}`)}</span></div>`).join('') + '</details>').join('');
     $('port-search-input').addEventListener('input', filterPorts);
-    const npmSearch = $('npm-search-input');
-    if (npmSearch) npmSearch.addEventListener('input', filterNpm);
     document.querySelectorAll('.random-port').forEach((button) => button.addEventListener('click', getRandomPort));
     renderCards();
   } catch (error) { notice(error.message); }
@@ -107,19 +65,12 @@ function filterPorts(event) {
   const query = event.target.value.trim().toLowerCase();
   document.querySelectorAll('.host').forEach((host) => {
     let visible = 0;
-    host.querySelectorAll('.container-row').forEach((row) => {
+    host.querySelectorAll('.container-row,.npm-route-row').forEach((row) => {
       const matches = !query || row.dataset.ports.toLowerCase().includes(query);
       row.hidden = !matches;
       if (matches) visible += 1;
     });
     host.hidden = visible === 0;
-  });
-}
-
-function filterNpm(event) {
-  const query = event.target.value.trim().toLowerCase();
-  document.querySelectorAll('.npm-row').forEach((row) => {
-    row.hidden = query && !row.dataset.npmText.toLowerCase().includes(query);
   });
 }
 
