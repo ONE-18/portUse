@@ -66,6 +66,23 @@ function renderCards() {
     .forEach((card) =>
       card.addEventListener("click", () => showDetail(card.dataset.id)),
     );
+  updateSnapshotSlider();
+}
+
+function updateSnapshotSlider(index = 0) {
+  const list = $("snapshot-list");
+  const slider = $("snapshot-range");
+  const cards = list.querySelectorAll(".card");
+  const max = Math.max(0, cards.length - 4);
+  slider.max = max;
+  slider.value = Math.min(index, max);
+  slider.disabled = max === 0;
+  list.scrollTo({
+    left: cards[slider.value]
+      ? cards[slider.value].offsetLeft - list.offsetLeft
+      : 0,
+    behavior: "smooth",
+  });
 }
 
 function escapeHtml(value) {
@@ -268,4 +285,7 @@ $("file-input").addEventListener("change", async (event) => {
   event.target.value = "";
 });
 $("compare-button").addEventListener("click", compare);
+$("snapshot-range").addEventListener("input", (event) => {
+  updateSnapshotSlider(Number(event.target.value));
+});
 load();
